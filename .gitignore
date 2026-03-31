@@ -1,0 +1,19 @@
+# Build
+bin/
+*.exe
+
+# Ledger data
+.ledger/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node
+sdk/node/node_modules/

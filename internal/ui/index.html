@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ledger</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0d1117; --surface: #161b22; --border: #30363d;
+  --text: #e6edf3; --text2: #8b949e; --accent: #58a6ff;
+  --green: #3fb950; --yellow: #d29922; --red: #f85149;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace; background: var(--bg); color: var(--text); }
+.app { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+/* Header */
+.header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.header h1 { font-size: 20px; font-weight: 600; }
+.header .badge { background: var(--accent); color: #000; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+
+/* Status bar */
+.status-bar { display: flex; gap: 24px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 20px; font-size: 13px; }
+.status-bar .stat { display: flex; gap: 6px; align-items: center; }
+.status-bar .stat .label { color: var(--text2); }
+.status-bar .stat .value { font-weight: 600; }
+
+/* Search */
+.search-box { display: flex; gap: 8px; margin-bottom: 16px; }
+.search-box input { flex: 1; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px; outline: none; }
+.search-box input:focus { border-color: var(--accent); }
+.search-box button { padding: 10px 20px; background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; }
+.search-box button:hover { opacity: 0.9; }
+
+/* Filters */
+.filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.filters select, .filters input { padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; }
+
+/* Results */
+.results { display: flex; flex-direction: column; gap: 12px; }
+.result-card { padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; transition: border-color 0.2s; }
+.result-card:hover { border-color: var(--accent); }
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.result-file { font-size: 12px; color: var(--accent); font-family: monospace; }
+.result-score { font-size: 11px; color: var(--text2); background: var(--bg); padding: 2px 8px; border-radius: 4px; }
+.result-heading { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.result-content { font-size: 13px; color: var(--text2); line-height: 1.5; white-space: pre-wrap; max-height: 80px; overflow: hidden; }
+.result-tags { display: flex; gap: 4px; margin-top: 8px; }
+.result-tags .tag { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: var(--border); color: var(--text2); }
+.result-meta { font-size: 11px; color: var(--text2); margin-top: 6px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.tab { padding: 8px 16px; cursor: pointer; color: var(--text2); font-size: 13px; border-bottom: 2px solid transparent; }
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.tab:hover { color: var(--text); }
+
+/* Check results */
+.check-item { padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; font-size: 13px; }
+.check-item .sim { color: var(--yellow); font-weight: 600; }
+
+.empty { text-align: center; padding: 40px; color: var(--text2); font-size: 14px; }
+.loading { text-align: center; padding: 20px; color: var(--text2); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>Ledger</h1>
+    <span class="badge">Document Memory System</span>
+  </div>
+
+  <div class="status-bar" id="status-bar">
+    <div class="stat"><span class="label">Files:</span> <span class="value" id="stat-files">-</span></div>
+    <div class="stat"><span class="label">Chunks:</span> <span class="value" id="stat-chunks">-</span></div>
+    <div class="stat"><span class="label">Embeddings:</span> <span class="value" id="stat-embeds">-</span></div>
+    <div class="stat"><span class="label">Model:</span> <span class="value" id="stat-model">-</span></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="search">Search</div>
+    <div class="tab" data-tab="browse">Browse</div>
+    <div class="tab" data-tab="check">Check</div>
+  </div>
+
+  <!-- Search Tab -->
+  <div id="tab-search">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Search documents..." autofocus>
+      <button onclick="doSearch()">Search</button>
+    </div>
+    <div class="filters">
+      <select id="filter-mode">
+        <option value="keyword">Keyword (BM25)</option>
+        <option value="semantic">Semantic</option>
+        <option value="hybrid">Hybrid</option>
+      </select>
+      <select id="filter-role">
+        <option value="">No role boost</option>
+        <option value="developer">Developer</option>
+        <option value="ios_developer">iOS Developer</option>
+        <option value="director">Director</option>
+        <option value="security">Security</option>
+        <option value="qa">QA</option>
+      </select>
+      <input type="text" id="filter-type" placeholder="type" style="width:80px">
+      <input type="text" id="filter-tag" placeholder="tag" style="width:80px">
+      <input type="number" id="filter-top" placeholder="top" value="10" style="width:60px">
+    </div>
+    <div class="results" id="results"></div>
+  </div>
+
+  <!-- Browse Tab -->
+  <div id="tab-browse" style="display:none">
+    <div class="filters" style="margin-bottom:16px">
+      <input type="text" id="browse-file" placeholder="filter by filename...">
+      <select id="browse-type">
+        <option value="">All types</option>
+        <option value="changelog">changelog</option>
+        <option value="issues">issues</option>
+        <option value="rules">rules</option>
+        <option value="claude">claude</option>
+        <option value="other">other</option>
+      </select>
+      <button onclick="doBrowse()" style="padding:6px 12px; background:var(--accent); color:#000; border:none; border-radius:4px; cursor:pointer; font-size:12px;">Load</button>
+    </div>
+    <div class="results" id="browse-results"></div>
+  </div>
+
+  <!-- Check Tab -->
+  <div id="tab-check" style="display:none">
+    <div class="filters" style="margin-bottom:16px">
+      <input type="number" id="check-threshold" placeholder="threshold" value="0.90" step="0.05" style="width:100px">
+      <button onclick="doCheck()" style="padding:6px 12px; background:var(--accent); color:#000; border:none; border-radius:4px; cursor:pointer; font-size:12px;">Scan</button>
+    </div>
+    <div id="check-results"></div>
+  </div>
+</div>
+
+<script>
+const API = '';
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('[id^="tab-"]').forEach(p => p.style.display = 'none');
+    document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
+  });
+});
+
+// Status
+async function loadStatus() {
+  try {
+    const r = await fetch(API + '/api/status');
+    const d = await r.json();
+    document.getElementById('stat-files').textContent = d.files_indexed;
+    document.getElementById('stat-chunks').textContent = d.total_chunks;
+    document.getElementById('stat-embeds').textContent = d.embeddings;
+    document.getElementById('stat-model').textContent = d.embed_model || 'none';
+  } catch(e) { console.error(e); }
+}
+
+// Search
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+async function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+
+  const params = new URLSearchParams({ q });
+  const top = document.getElementById('filter-top').value;
+  if (top) params.set('top', top);
+  const type = document.getElementById('filter-type').value;
+  if (type) params.set('type', type);
+  const tag = document.getElementById('filter-tag').value;
+  if (tag) params.set('tag', tag);
+  const role = document.getElementById('filter-role').value;
+  if (role) params.set('role', role);
+
+  const el = document.getElementById('results');
+  el.innerHTML = '<div class="loading">Searching...</div>';
+
+  try {
+    const r = await fetch(API + '/api/search?' + params);
+    const d = await r.json();
+    if (!d.results || d.results.length === 0) {
+      el.innerHTML = '<div class="empty">No results found.</div>';
+      return;
+    }
+    el.innerHTML = d.results.map((r, i) => `
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-file">${escHtml(r.file)}:${r.line_start}</span>
+          <span class="result-score">score: ${r.score.toFixed(2)}</span>
+        </div>
+        ${r.heading ? `<div class="result-heading">${escHtml(r.heading)}</div>` : ''}
+        <div class="result-content">${escHtml(r.content.substring(0, 300))}</div>
+        <div class="result-meta">
+          type: ${r.file_type}${r.date ? ' | date: ' + r.date : ''}
+        </div>
+        ${r.tags ? `<div class="result-tags">${r.tags.split(',').map(t => `<span class="tag">${t.trim()}</span>`).join('')}</div>` : ''}
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
+  }
+}
+
+// Browse
+async function doBrowse() {
+  const params = new URLSearchParams({ limit: 100 });
+  const file = document.getElementById('browse-file').value;
+  if (file) params.set('file', file);
+  const type = document.getElementById('browse-type').value;
+  if (type) params.set('type', type);
+
+  const el = document.getElementById('browse-results');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+
+  try {
+    const r = await fetch(API + '/api/chunks?' + params);
+    const d = await r.json();
+    if (!d.chunks || d.chunks.length === 0) {
+      el.innerHTML = '<div class="empty">No chunks found.</div>';
+      return;
+    }
+    el.innerHTML = d.chunks.map(c => `
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-file">${escHtml(c.file)}:${c.line_start}</span>
+          <span class="result-score">${c.file_type}</span>
+        </div>
+        ${c.heading ? `<div class="result-heading">${escHtml(c.heading)}</div>` : ''}
+        <div class="result-content">${escHtml(c.content.substring(0, 200))}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
+  }
+}
+
+// Check
+async function doCheck() {
+  const threshold = document.getElementById('check-threshold').value || '0.90';
+  const el = document.getElementById('check-results');
+  el.innerHTML = '<div class="loading">Scanning...</div>';
+
+  try {
+    const r = await fetch(API + '/api/check?threshold=' + threshold);
+    const d = await r.json();
+    if (d.total === 0) {
+      el.innerHTML = '<div class="empty">No contradictions found.</div>';
+      return;
+    }
+    let html = '';
+    if (d.contradictions && d.contradictions.length) {
+      html += `<h3 style="margin:16px 0 8px; font-size:14px; color:var(--yellow);">Contradictions (${d.contradictions.length})</h3>`;
+      html += d.contradictions.map(c => `
+        <div class="check-item">
+          <span class="sim">${c.similarity.toFixed(2)}</span> ${escHtml(c.reason)}<br>
+          A: ${escHtml(c.file_a)} &mdash; ${escHtml(c.heading_a)}<br>
+          B: ${escHtml(c.file_b)} &mdash; ${escHtml(c.heading_b)}
+        </div>
+      `).join('');
+    }
+    if (d.superseded && d.superseded.length) {
+      html += `<h3 style="margin:16px 0 8px; font-size:14px; color:var(--yellow);">Superseded (${d.superseded.length})</h3>`;
+      html += d.superseded.map(s => `
+        <div class="check-item">
+          <span class="sim">${s.similarity.toFixed(2)}</span><br>
+          Older: ${escHtml(s.older_file)} (${s.older_date})<br>
+          Newer: ${escHtml(s.newer_file)} (${s.newer_date})
+        </div>
+      `).join('');
+    }
+    html += `<div style="margin-top:12px; font-size:13px; color:var(--text2);">Total: ${d.total} issues</div>`;
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
+  }
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+loadStatus();
+</script>
+</body>
+</html>

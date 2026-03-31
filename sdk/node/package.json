@@ -1,0 +1,13 @@
+{
+  "name": "@cavss/ledger",
+  "version": "0.2.0",
+  "description": "Node.js client for Ledger Document Memory System",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "MIT",
+  "keywords": ["ledger", "document", "search", "memory", "indexing"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cavss/ledger"
+  }
+}
