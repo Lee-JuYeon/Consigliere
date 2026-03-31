@@ -146,26 +146,174 @@ func (f TagFilter) ToSQL() (string, interface{}) {
 }
 
 // RoleWeights maps roles to file-type boost multipliers.
+// CLI Company 16개 에이전트 + 범용 역할 전체 지원.
 var RoleWeights = map[string]map[string]float64{
-	"developer": {
-		"changelog": 1.5, "issues": 1.3, "rules": 1.2, "claude": 1.4,
-		"workflow": 1.1, "other": 1.0, "dashboard": 0.8, "memory": 0.9,
+	// === Director / 경영 ===
+	"director": {
+		"dashboard": 1.5, "workflow": 1.4, "rules": 1.3, "changelog": 1.3,
+		"issues": 1.1, "debate": 1.2, "memory": 1.1, "claude": 0.8,
+		"checklist": 0.9, "other": 1.0,
+	},
+	"pm": {
+		"dashboard": 1.5, "workflow": 1.4, "issues": 1.3, "changelog": 1.2,
+		"rules": 1.1, "debate": 1.2, "checklist": 1.1, "memory": 1.0,
+		"claude": 0.8, "other": 1.0,
+	},
+
+	// === Architecture ===
+	"system_architect": {
+		"changelog": 1.5, "rules": 1.4, "workflow": 1.3, "debate": 1.3,
+		"issues": 1.2, "dashboard": 1.0, "claude": 1.1, "checklist": 0.9,
+		"memory": 0.9, "other": 1.0,
+	},
+	"data_architect": {
+		"changelog": 1.5, "rules": 1.3, "issues": 1.3, "debate": 1.2,
+		"workflow": 1.1, "claude": 1.1, "dashboard": 0.9, "checklist": 0.9,
+		"memory": 0.9, "other": 1.0,
+	},
+	"cloud_architect": {
+		"rules": 1.5, "changelog": 1.4, "issues": 1.2, "workflow": 1.2,
+		"debate": 1.2, "claude": 1.0, "dashboard": 0.9, "checklist": 1.0,
+		"memory": 0.8, "other": 1.0,
+	},
+
+	// === Backend ===
+	"api_developer": {
+		"changelog": 1.5, "issues": 1.4, "rules": 1.2, "claude": 1.3,
+		"debate": 1.1, "workflow": 1.0, "checklist": 1.0, "dashboard": 0.8,
+		"memory": 0.8, "other": 1.0,
+	},
+	"business_logic_developer": {
+		"changelog": 1.5, "issues": 1.4, "rules": 1.3, "claude": 1.2,
+		"debate": 1.1, "workflow": 1.0, "checklist": 1.0, "dashboard": 0.8,
+		"memory": 0.8, "other": 1.0,
+	},
+	"database_developer": {
+		"changelog": 1.5, "rules": 1.4, "issues": 1.3, "claude": 1.2,
+		"debate": 1.1, "workflow": 1.0, "checklist": 1.0, "dashboard": 0.8,
+		"memory": 0.8, "other": 1.0,
+	},
+
+	// === Frontend ===
+	"web_developer": {
+		"changelog": 1.5, "issues": 1.3, "rules": 1.3, "claude": 1.4,
+		"checklist": 1.1, "debate": 1.0, "workflow": 1.0, "dashboard": 0.8,
+		"memory": 0.8, "other": 1.0,
 	},
 	"ios_developer": {
-		"changelog": 1.5, "issues": 1.3, "rules": 1.4, "claude": 1.5,
-		"workflow": 1.2, "other": 1.0, "dashboard": 0.7, "memory": 0.8,
+		"changelog": 1.5, "rules": 1.4, "claude": 1.4, "issues": 1.3,
+		"checklist": 1.2, "debate": 1.1, "workflow": 1.0, "dashboard": 0.7,
+		"memory": 0.8, "other": 1.0,
 	},
-	"director": {
-		"dashboard": 1.5, "changelog": 1.3, "issues": 1.0, "rules": 0.8,
-		"workflow": 1.2, "other": 1.0, "claude": 0.7, "memory": 1.1,
+	"android_developer": {
+		"changelog": 1.5, "rules": 1.4, "claude": 1.4, "issues": 1.3,
+		"checklist": 1.2, "debate": 1.1, "workflow": 1.0, "dashboard": 0.7,
+		"memory": 0.8, "other": 1.0,
+	},
+	"ui_ux_designer": {
+		"rules": 1.4, "issues": 1.3, "changelog": 1.3, "claude": 1.2,
+		"workflow": 1.1, "debate": 1.0, "checklist": 1.0, "dashboard": 1.0,
+		"memory": 0.8, "other": 1.0,
+	},
+
+	// === Security ===
+	"app_security": {
+		"rules": 1.5, "issues": 1.5, "changelog": 1.3, "debate": 1.3,
+		"claude": 1.0, "workflow": 1.0, "checklist": 1.1, "dashboard": 0.9,
+		"memory": 0.8, "other": 1.0,
+	},
+	"db_security": {
+		"rules": 1.5, "issues": 1.5, "changelog": 1.2, "debate": 1.2,
+		"claude": 1.0, "workflow": 1.0, "checklist": 1.1, "dashboard": 0.8,
+		"memory": 0.8, "other": 1.0,
+	},
+	"infra_security": {
+		"rules": 1.5, "issues": 1.4, "changelog": 1.2, "debate": 1.2,
+		"workflow": 1.1, "claude": 1.0, "checklist": 1.1, "dashboard": 0.8,
+		"memory": 0.8, "other": 1.0,
+	},
+	"security_researcher": {
+		"issues": 1.5, "rules": 1.4, "debate": 1.3, "changelog": 1.2,
+		"claude": 1.0, "workflow": 1.0, "checklist": 0.9, "dashboard": 0.8,
+		"memory": 0.9, "other": 1.0,
+	},
+
+	// === QA ===
+	"functional_tester": {
+		"issues": 1.5, "changelog": 1.4, "checklist": 1.3, "rules": 1.2,
+		"debate": 1.1, "workflow": 1.1, "claude": 0.9, "dashboard": 1.0,
+		"memory": 0.8, "other": 1.0,
+	},
+	"performance_tester": {
+		"issues": 1.5, "changelog": 1.3, "checklist": 1.3, "rules": 1.2,
+		"debate": 1.0, "workflow": 1.1, "claude": 0.9, "dashboard": 1.1,
+		"memory": 0.8, "other": 1.0,
+	},
+
+	// === DevOps ===
+	"cicd_engineer": {
+		"workflow": 1.5, "rules": 1.3, "changelog": 1.3, "issues": 1.2,
+		"checklist": 1.2, "debate": 1.0, "claude": 1.0, "dashboard": 1.0,
+		"memory": 0.8, "other": 1.0,
+	},
+	"infra_engineer": {
+		"rules": 1.4, "workflow": 1.4, "changelog": 1.3, "issues": 1.2,
+		"checklist": 1.2, "debate": 1.0, "claude": 1.0, "dashboard": 1.0,
+		"memory": 0.8, "other": 1.0,
+	},
+
+	// === Support ===
+	"tech_writer": {
+		"changelog": 1.5, "rules": 1.3, "workflow": 1.3, "debate": 1.2,
+		"issues": 1.1, "dashboard": 1.1, "claude": 1.0, "checklist": 1.0,
+		"memory": 1.0, "other": 1.0,
+	},
+	"data_analyst": {
+		"dashboard": 1.5, "issues": 1.3, "changelog": 1.3, "rules": 1.1,
+		"workflow": 1.1, "debate": 1.0, "claude": 0.9, "checklist": 0.9,
+		"memory": 1.0, "other": 1.0,
+	},
+	"tech_researcher": {
+		"debate": 1.4, "changelog": 1.3, "issues": 1.3, "rules": 1.2,
+		"workflow": 1.0, "claude": 1.0, "dashboard": 1.0, "checklist": 0.9,
+		"memory": 1.0, "other": 1.0,
+	},
+	"market_researcher": {
+		"dashboard": 1.4, "debate": 1.3, "changelog": 1.2, "rules": 1.1,
+		"issues": 1.1, "workflow": 1.0, "claude": 0.9, "checklist": 0.8,
+		"memory": 1.0, "other": 1.0,
+	},
+	"accountant": {
+		"dashboard": 1.5, "rules": 1.4, "changelog": 1.2, "workflow": 1.1,
+		"issues": 1.0, "debate": 1.0, "claude": 0.8, "checklist": 1.0,
+		"memory": 0.9, "other": 1.0,
+	},
+	"growth_marketer": {
+		"dashboard": 1.4, "changelog": 1.3, "debate": 1.2, "rules": 1.1,
+		"issues": 1.1, "workflow": 1.0, "claude": 0.9, "checklist": 0.9,
+		"memory": 1.0, "other": 1.0,
+	},
+	"content_marketer": {
+		"changelog": 1.4, "dashboard": 1.3, "debate": 1.2, "rules": 1.1,
+		"issues": 1.0, "workflow": 1.0, "claude": 0.9, "checklist": 0.9,
+		"memory": 1.0, "other": 1.0,
+	},
+
+	// === 범용 폴백 ===
+	"developer": {
+		"changelog": 1.5, "issues": 1.3, "rules": 1.2, "claude": 1.4,
+		"workflow": 1.1, "debate": 1.0, "checklist": 1.0, "dashboard": 0.8,
+		"memory": 0.9, "other": 1.0,
 	},
 	"security": {
-		"rules": 1.5, "issues": 1.4, "changelog": 1.2, "claude": 1.0,
-		"workflow": 1.1, "other": 1.0, "dashboard": 0.9, "memory": 0.8,
+		"rules": 1.5, "issues": 1.4, "changelog": 1.2, "debate": 1.2,
+		"claude": 1.0, "workflow": 1.1, "checklist": 1.1, "dashboard": 0.9,
+		"memory": 0.8, "other": 1.0,
 	},
 	"qa": {
-		"issues": 1.5, "changelog": 1.4, "rules": 1.2, "workflow": 1.3,
-		"other": 1.0, "dashboard": 1.1, "claude": 0.9, "memory": 0.8,
+		"issues": 1.5, "changelog": 1.4, "checklist": 1.3, "rules": 1.2,
+		"debate": 1.1, "workflow": 1.3, "claude": 0.9, "dashboard": 1.1,
+		"memory": 0.8, "other": 1.0,
 	},
 }
 

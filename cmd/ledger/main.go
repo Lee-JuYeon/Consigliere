@@ -784,7 +784,15 @@ Search flags:
   --before <date>    Filter by date (YYYY-MM-DD)
   --top <N>          Number of results (default: 5)
   --mode <mode>      Search mode: keyword (default), semantic, hybrid
-  --role <role>      Role-based boost: developer, ios_developer, director, security, qa
+  --role <role>      Role-based boost (28 roles supported):
+                     director, pm, system_architect, data_architect, cloud_architect,
+                     api_developer, business_logic_developer, database_developer,
+                     web_developer, ios_developer, android_developer, ui_ux_designer,
+                     app_security, db_security, infra_security, security_researcher,
+                     functional_tester, performance_tester, cicd_engineer, infra_engineer,
+                     tech_writer, data_analyst, tech_researcher, market_researcher,
+                     accountant, growth_marketer, content_marketer,
+                     developer, security, qa (fallback)
 
 Embed flags:
   --model <name>     Ollama model (default: nomic-embed-text)
