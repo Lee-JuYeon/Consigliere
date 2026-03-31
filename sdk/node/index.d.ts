@@ -11,10 +11,18 @@ export interface SearchResult {
   score: number;
 }
 
+export interface SearchMeta {
+  mode: string;
+  role: string;
+  top_k: number;
+  elapsed_ms: number;
+}
+
 export interface SearchResponse {
   query: string;
   results: SearchResult[];
   total: number;
+  meta: SearchMeta;
 }
 
 export interface StatusResponse {
@@ -78,6 +86,7 @@ export interface SearchOptions {
   after?: string;
   before?: string;
   role?: string;
+  mode?: 'keyword' | 'semantic' | 'hybrid';
 }
 
 export interface ChunkOptions {

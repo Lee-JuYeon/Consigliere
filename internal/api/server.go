@@ -7,21 +7,43 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cavss/ledger/internal/check"
+	"github.com/cavss/ledger/internal/embed"
 	"github.com/cavss/ledger/internal/search"
 	"github.com/cavss/ledger/internal/store"
 )
 
 type Server struct {
-	store   *store.Store
-	db      *sql.DB
-	baseDir string
-	port    int
+	store       *store.Store
+	db          *sql.DB
+	baseDir     string
+	port        int
+	embEndpoint string
+	embModel    string
 }
 
 func NewServer(s *store.Store, baseDir string, port int) *Server {
-	return &Server{store: s, db: s.DB(), baseDir: baseDir, port: port}
+	return &Server{
+		store:       s,
+		db:          s.DB(),
+		baseDir:     baseDir,
+		port:        port,
+		embEndpoint: "http://localhost:11434",
+		embModel:    "nomic-embed-text",
+	}
+}
+
+func NewServerWithEmbedding(s *store.Store, baseDir string, port int, endpoint, model string) *Server {
+	srv := NewServer(s, baseDir, port)
+	if endpoint != "" {
+		srv.embEndpoint = endpoint
+	}
+	if model != "" {
+		srv.embModel = model
+	}
+	return srv
 }
 
 func (s *Server) Start() error {
@@ -63,6 +85,8 @@ func writeError(w http.ResponseWriter, code int, msg string) {
 
 // GET /api/search?q=query&top=5&type=changelog&tag=security&mode=keyword&role=developer
 func (s *Server) HandleSearch(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
 	q := r.URL.Query()
 	query := q.Get("q")
 	if query == "" {
@@ -73,6 +97,11 @@ func (s *Server) HandleSearch(w http.ResponseWriter, r *http.Request) {
 	topK := 5
 	if v := q.Get("top"); v != "" {
 		topK, _ = strconv.Atoi(v)
+	}
+
+	mode := q.Get("mode")
+	if mode == "" {
+		mode = "keyword"
 	}
 
 	var filters []search.Filter
@@ -90,17 +119,39 @@ func (s *Server) HandleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	searcher := search.NewWithStore(s.store)
-	results, err := searcher.Search(query, topK, filters...)
+	var results []search.Result
+	var err error
+	actualMode := mode
+
+	switch mode {
+	case "semantic", "hybrid":
+		// Ollama 임베딩 시도, 실패하면 BM25 폴백
+		client := embed.NewClient(s.embEndpoint, s.embModel)
+		queryVec, embErr := client.Embed(query)
+		if embErr != nil {
+			// 폴백
+			actualMode = "keyword (fallback from " + mode + ")"
+			results, err = searcher.Search(query, topK, filters...)
+		} else if mode == "semantic" {
+			results, err = searcher.SemanticSearch(queryVec, topK, filters...)
+		} else {
+			results, err = searcher.HybridSearch(query, queryVec, topK, 0.5, filters...)
+		}
+	default:
+		results, err = searcher.Search(query, topK, filters...)
+		actualMode = "keyword"
+	}
+
 	if err != nil {
 		writeError(w, 500, err.Error())
 		return
 	}
 
-	if role := q.Get("role"); role != "" {
+	role := q.Get("role")
+	if role != "" {
 		results = search.ApplyRoleBoost(results, role)
 	}
 
-	// shortPath 변환
 	type apiResult struct {
 		ID        int     `json:"id"`
 		File      string  `json:"file"`
@@ -124,10 +175,18 @@ func (s *Server) HandleSearch(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	elapsed := time.Since(start)
+
 	writeJSON(w, map[string]interface{}{
 		"query":   query,
 		"results": out,
 		"total":   len(out),
+		"meta": map[string]interface{}{
+			"mode":       actualMode,
+			"role":       role,
+			"top_k":      topK,
+			"elapsed_ms": elapsed.Milliseconds(),
+		},
 	})
 }
 
