@@ -10,6 +10,16 @@
 [![SQLite](https://img.shields.io/badge/SQLite-FTS5-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+### CLI Aliases
+
+```
+consigliere <command>       # 정식 명칭
+--vincenzo                  # 별칭
+--consigliere               # 별칭
+```
+
+> *Part of the [CLI Company](https://github.com/users/Lee-JuYeon/projects/21) ecosystem*
+
 프로젝트의 문서(.md)를 자동 인덱싱하고, 필요한 컨텍스트만 검색해서 LLM에 주입한다.
 전체 파일을 로드하는 대신 **상위 K개 청크만 전달**해서 토큰을 절약하고, 할루시네이션 없이 원본 텍스트만 반환한다.
 
