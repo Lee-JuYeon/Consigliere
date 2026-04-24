@@ -4,7 +4,7 @@
 
 # Consigliere
 
-> **Document Memory System** — LLM 에이전트를 위한 외장 메모리
+> **Document Memory System** — External memory for LLM agents
 
 [![Go](https://img.shields.io/badge/Go-1.18+-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![SQLite](https://img.shields.io/badge/SQLite-FTS5-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
@@ -13,167 +13,167 @@
 ### CLI Aliases
 
 ```
-consigliere <command>       # 정식 명칭
---vincenzo                  # 별칭
---consigliere               # 별칭
+consigliere <command>       # formal name
+--vincenzo                  # alias
+--consigliere               # alias
 ```
 
 > *Part of the [CLI Company](https://github.com/users/Lee-JuYeon/projects/21) ecosystem*
 
-프로젝트의 문서(.md)를 자동 인덱싱하고, 필요한 컨텍스트만 검색해서 LLM에 주입한다.
-전체 파일을 로드하는 대신 **상위 K개 청크만 전달**해서 토큰을 절약하고, 할루시네이션 없이 원본 텍스트만 반환한다.
+Automatically indexes project documents (.md), retrieves only the necessary context, and injects it into the LLM.
+Instead of loading entire files, it passes only the **top-K chunks** to save tokens and returns only original text with zero hallucination.
 
 ---
 
-## 왜 Consigliere인가?
+## Why Consigliere?
 
-| 기존 방식 | 문제 | Consigliere |
+| Existing approach | Problem | Consigliere |
 |-----------|------|--------|
-| `grep "보안"` | 키워드 안 맞으면 못 찾음 | 시맨틱 검색으로 의미 기반 탐색 |
-| 전체 파일 로드 | 토큰 폭발 (50+개 MD) | top-K 검색으로 필요한 것만 |
-| 수동 문서 관리 | 파일 늘수록 관리 불가 | 자동 인덱싱 + 태깅 |
-| 모순 방치 | 옛 규칙과 새 결정 공존 | 자동 모순 감지 + 해결 제안 |
-| 세션 끊기면 리셋 | 컨텍스트 유실 | 버전 스냅샷 + 복원 |
+| `grep "security"` | Can't find if keyword doesn't match | Semantic search for meaning-based discovery |
+| Load entire files | Token explosion (50+ MDs) | top-K search for only what's needed |
+| Manual document management | Unmanageable as files grow | Automatic indexing + tagging |
+| Ignore contradictions | Old rules coexist with new decisions | Automatic contradiction detection + resolution suggestions |
+| Reset on session end | Context lost | Version snapshots + restore |
 
-### 경쟁 비교
+### Competitive Comparison
 
-| 기능 | SuperMemory | NotebookLM | **Consigliere** |
+| Feature | SuperMemory | NotebookLM | **Consigliere** |
 |------|:-----------:|:----------:|:----------:|
-| 시맨틱 검색 | O | O | **O** |
-| 할루시네이션 제로 | △ | O | **O** |
-| 버전 추적 + diff | X | X | **O** |
-| CLI 호출 | X | X | **O** |
-| 역할별 검색 우선순위 | X | X | **O** |
-| 모순 감지 | △ | X | **O** |
-| Self-hosted / 오프라인 | △ | X | **O** |
-| 완전 무료 | △ | O | **O** |
+| Semantic search | O | O | **O** |
+| Zero hallucination | △ | O | **O** |
+| Version tracking + diff | X | X | **O** |
+| CLI invocation | X | X | **O** |
+| Role-based search priority | X | X | **O** |
+| Contradiction detection | △ | X | **O** |
+| Self-hosted / offline | △ | X | **O** |
+| Completely free | △ | O | **O** |
 
 ---
 
-## 특징
+## Features
 
-- **할루시네이션 제로** — 원본 텍스트만 반환. LLM이 생성/추론하지 않음
-- **~13MB 단일 바이너리** — 외부 의존성 0, 완전 오프라인 동작
-- **3가지 검색 모드** — BM25 키워드 / 시맨틱(벡터) / 하이브리드
-- **역할별 우선순위** — developer, director, security 등 역할에 따른 결과 부스트
-- **모순 감지** — 문서 간 충돌 자동 스캔 + 해결 제안
-- **버전 스냅샷** — 커밋별 인덱스 저장, diff, 시점 복원
-- **Git Hook 자동화** — 커밋마다 자동 재인덱싱
-- **웹 UI** — 브라우저 기반 검색/브라우즈/체크 대시보드
-- **JSON API + Node.js SDK** — 외부 시스템 연동
-- **플러그인** — 커스텀 파일 타입, 태그 룰, 청킹 전략
+- **Zero hallucination** — Returns only original text. LLM does not generate or infer
+- **~13MB single binary** — Zero external dependencies, fully offline operation
+- **3 search modes** — BM25 keyword / semantic (vector) / hybrid
+- **Role-based priority** — Result boosting based on roles like developer, director, security
+- **Contradiction detection** — Automatic scan for conflicts between documents + resolution suggestions
+- **Version snapshots** — Index saved per commit, diff, point-in-time restore
+- **Git Hook automation** — Automatic re-indexing on every commit
+- **Web UI** — Browser-based search/browse/check dashboard
+- **JSON API + Node.js SDK** — Integration with external systems
+- **Plugins** — Custom file types, tag rules, chunking strategies
 
 ---
 
 ## Quick Start
 
-### 설치
+### Installation
 
 ```bash
-# 소스에서 빌드
+# Build from source
 git clone https://github.com/Lee-JuYeon/Consigliere.git
 cd Consigliere
 make build
 
-# 또는 직접 빌드
+# Or build directly
 CGO_ENABLED=1 go build -tags "fts5" -o bin/consigliere ./cmd/consigliere/
 ```
 
-> **요구사항**: Go 1.18+, CGO 지원 (SQLite FTS5)
+> **Requirements**: Go 1.18+, CGO support (SQLite FTS5)
 
-### 기본 사용법
+### Basic Usage
 
 ```bash
-# 1. 프로젝트에서 초기화
+# 1. Initialize in your project
 cd your-project/
-consigliere init              # .consigliere.toml 생성 + git hook 설치
+consigliere init              # creates .consigliere.toml + installs git hook
 
-# 2. 문서 인덱싱
-consigliere index             # docs/**/*.md 자동 탐색 + 인덱싱
+# 2. Index documents
+consigliere index             # auto-discovers + indexes docs/**/*.md
 
-# 3. 검색
-consigliere search "보안"
-consigliere search "에이전트" --type changelog
-consigliere search "버그" --tag security --top 10
+# 3. Search
+consigliere search "security"
+consigliere search "agent" --type changelog
+consigliere search "bug" --tag security --top 10
 
-# 4. 상태 확인
+# 4. Check status
 consigliere status
 ```
 
-### 시맨틱 검색 (선택)
+### Semantic Search (optional)
 
 ```bash
-# Ollama 설치 후
+# After installing Ollama
 ollama pull nomic-embed-text
 
-# 임베딩 생성
+# Generate embeddings
 consigliere embed
 
-# 의미 기반 검색
-consigliere search "아키텍처 설계 방향" --mode semantic
+# Meaning-based search
+consigliere search "architecture design direction" --mode semantic
 
-# 키워드 + 시맨틱 결합
-consigliere search "아키텍처 설계 방향" --mode hybrid
+# Keyword + semantic combined
+consigliere search "architecture design direction" --mode hybrid
 ```
 
-### 역할별 검색
+### Role-based Search
 
 ```bash
-# 개발자 → changelog, issues 우선
-consigliere search "프로젝트" --role developer
+# Developer → changelog, issues first
+consigliere search "project" --role developer
 
-# 디렉터 → dashboard, workflow 우선
-consigliere search "프로젝트" --role director
+# Director → dashboard, workflow first
+consigliere search "project" --role director
 
-# 보안팀 → rules, issues 우선
-consigliere search "인증" --role security
+# Security team → rules, issues first
+consigliere search "authentication" --role security
 ```
 
 ---
 
-## 전체 명령어
+## All Commands
 
 ```
-consigliere init                              설정 파일 생성 + git hook 자동 설치
-consigliere index [--quiet]                   문서 인덱싱 (증분 업데이트)
-consigliere embed [--model M] [--endpoint U]  벡터 임베딩 생성 (Ollama 연동)
-consigliere search <query> [flags]            검색
-consigliere snapshot [--label "..."]          현재 인덱스 스냅샷 저장
-consigliere snapshot list                     스냅샷 목록 조회
-consigliere diff <ref-a> <ref-b>              두 스냅샷 비교 (HEAD, HEAD~N, hash)
-consigliere restore <ref>                     스냅샷 시점으로 인덱스 복원
-consigliere check [--fix] [--threshold N]     문서 간 모순 감지
-consigliere serve [--port N]                  JSON API 서버 시작 (기본: 7890)
-consigliere ui [--port N]                     웹 UI 시작 (기본: 7890)
-consigliere hook install|uninstall|status     git post-commit hook 관리
-consigliere status                            인덱스 상태 확인
+consigliere init                              Create config file + auto-install git hook
+consigliere index [--quiet]                   Index documents (incremental update)
+consigliere embed [--model M] [--endpoint U]  Generate vector embeddings (Ollama integration)
+consigliere search <query> [flags]            Search
+consigliere snapshot [--label "..."]          Save current index as snapshot
+consigliere snapshot list                     List snapshots
+consigliere diff <ref-a> <ref-b>              Compare two snapshots (HEAD, HEAD~N, hash)
+consigliere restore <ref>                     Restore index to snapshot point
+consigliere check [--fix] [--threshold N]     Detect contradictions between documents
+consigliere serve [--port N]                  Start JSON API server (default: 7890)
+consigliere ui [--port N]                     Start web UI (default: 7890)
+consigliere hook install|uninstall|status     Manage git post-commit hook
+consigliere status                            Check index status
 ```
 
 ### Search Flags
 
-| Flag | 설명 | 예시 |
+| Flag | Description | Example |
 |------|------|------|
-| `--type <type>` | 파일 유형 필터 | `--type changelog` |
-| `--tag <tag>` | 태그 필터 | `--tag security` |
-| `--after <date>` | 날짜 이후 | `--after 2026-03-01` |
-| `--before <date>` | 날짜 이전 | `--before 2026-04-01` |
-| `--top <N>` | 결과 수 (기본: 5) | `--top 10` |
-| `--mode <mode>` | 검색 모드 | `--mode hybrid` |
-| `--role <role>` | 역할별 부스트 | `--role developer` |
+| `--type <type>` | File type filter | `--type changelog` |
+| `--tag <tag>` | Tag filter | `--tag security` |
+| `--after <date>` | After date | `--after 2026-03-01` |
+| `--before <date>` | Before date | `--before 2026-04-01` |
+| `--top <N>` | Result count (default: 5) | `--top 10` |
+| `--mode <mode>` | Search mode | `--mode hybrid` |
+| `--role <role>` | Role-based boost | `--role developer` |
 
-**검색 모드:**
-- `keyword` (기본) — SQLite FTS5 BM25 랭킹
-- `semantic` — Ollama 벡터 임베딩 + 코사인 유사도
-- `hybrid` — BM25 + 코사인 정규화 결합 (alpha=0.5)
+**Search modes:**
+- `keyword` (default) — SQLite FTS5 BM25 ranking
+- `semantic` — Ollama vector embeddings + cosine similarity
+- `hybrid` — BM25 + normalized cosine combined (alpha=0.5)
 
-**역할:**
+**Roles:**
 `developer` · `ios_developer` · `director` · `security` · `qa`
 
 ---
 
-## 설정
+## Configuration
 
-`consigliere init`으로 생성되는 `.consigliere.toml`:
+`.consigliere.toml` generated by `consigliere init`:
 
 ```toml
 [index]
@@ -187,7 +187,7 @@ min_score = 0.3
 [project]
 name = "my-project"
 
-# 시맨틱 검색 설정 (선택)
+# Semantic search settings (optional)
 [embedding]
 enabled = false
 model = "nomic-embed-text"
@@ -195,34 +195,34 @@ endpoint = "http://localhost:11434"
 dimensions = 768
 ```
 
-### 플러그인 설정
+### Plugin Configuration
 
 ```toml
-# 커스텀 파일 유형 인식
+# Custom file type recognition
 [plugins.file_types.spec]
-pattern = "SPEC"          # 파일명에 "SPEC" 포함 → spec 타입
+pattern = "SPEC"          # filename contains "SPEC" → spec type
 
 [plugins.file_types.meeting]
 pattern = "MEETING"
 
-# 커스텀 태그 자동 부여
+# Custom auto-tagging
 [[plugins.tag_rules]]
-match = "TODO"            # 내용에 "TODO" 포함 시
-tag = "todo"              # "todo" 태그 자동 부여
+match = "TODO"            # when content contains "TODO"
+tag = "todo"              # auto-assign "todo" tag
 
 [[plugins.tag_rules]]
 match = "FIXME"
 tag = "fixme"
 
-# 청킹 전략 변경
+# Change chunking strategy
 [plugins]
-chunk_by = "heading"      # heading (기본) | paragraph | separator
-# separator = "---"       # chunk_by = "separator" 일 때
+chunk_by = "heading"      # heading (default) | paragraph | separator
+# separator = "---"       # when chunk_by = "separator"
 ```
 
 ---
 
-## 아키텍처
+## Architecture
 
 ```
 ┌───────────────────────────────────────────────────────┐
@@ -230,8 +230,8 @@ chunk_by = "heading"      # heading (기본) | paragraph | separator
 │                                                       │
 │  ┌─────────────────────────────────────┐              │
 │  │           DocumentPipe               │              │
-│  │  MD 파서 → 청킹 → 자동 태깅          │              │
-│  │  전략: heading / paragraph / separator│              │
+│  │  MD parser → chunking → auto-tagging │              │
+│  │  strategy: heading / paragraph / separator│              │
 │  └──────────────┬──────────────────────┘              │
 │                 ▼                                      │
 │  ┌─────────────────────────────────────┐              │
@@ -244,71 +244,71 @@ chunk_by = "heading"      # heading (기본) | paragraph | separator
 │    ▼            ▼            ▼                         │
 │  ┌──────┐  ┌────────┐  ┌──────────┐                  │
 │  │Search│  │Snapshot│  │  Checker │                   │
-│  │BM25  │  │diff    │  │  모순     │                   │
-│  │Sem.  │  │restore │  │  감지     │                   │
+│  │BM25  │  │diff    │  │  Contra- │                   │
+│  │Sem.  │  │restore │  │  diction │                   │
 │  │Hybrid│  └────────┘  └──────────┘                   │
 │  │+Role │                                             │
 │  └──┬───┘                                             │
 │     ▼                                                  │
 │  ┌─────────────────────────────────────┐              │
 │  │     API Server / Web UI / SDK        │              │
-│  │  REST JSON · 대시보드 · Node.js       │              │
+│  │  REST JSON · Dashboard · Node.js     │              │
 │  └─────────────────────────────────────┘              │
 │                                                       │
 │  ┌──────────────────────┐                             │
 │  │ Git Hook (post-commit)│                             │
-│  │ 커밋 → 자동 재인덱싱   │                             │
+│  │ commit → auto re-index│                             │
 │  └──────────────────────┘                             │
 └───────────────────────────────────────────────────────┘
 ```
 
-### 검색 흐름
+### Search Flow
 
 ```
-쿼리 입력
+Query input
   │
-  ├─ keyword ──→ FTS5 MATCH → BM25 rank → 필터 → 결과
+  ├─ keyword ──→ FTS5 MATCH → BM25 rank → filter → results
   │
-  ├─ semantic ─→ Ollama embed(쿼리) → 전체 벡터 코사인 유사도 → top-K
+  ├─ semantic ─→ Ollama embed(query) → full vector cosine similarity → top-K
   │
-  └─ hybrid ──→ BM25 후보 + 시맨틱 후보
-                → 점수 정규화 → (1-α)×BM25 + α×cosine
-                → 통합 정렬 → top-K
+  └─ hybrid ──→ BM25 candidates + semantic candidates
+                → score normalization → (1-α)×BM25 + α×cosine
+                → unified sort → top-K
                      │
-                     └─ --role 지정 시: file_type별 가중치 곱 → 재정렬
+                     └─ when --role specified: multiply file_type weight → re-rank
 ```
 
 ---
 
 ## API
 
-`consigliere serve` 또는 `consigliere ui`로 서버 시작:
+Start the server with `consigliere serve` or `consigliere ui`:
 
 ```bash
 consigliere serve --port 7890
 ```
 
-### 엔드포인트
+### Endpoints
 
-| Method | Path | 설명 |
+| Method | Path | Description |
 |--------|------|------|
-| GET | `/api/search?q=보안&top=5&type=changelog&role=developer` | 검색 |
-| GET | `/api/status` | 인덱스 상태 |
-| GET | `/api/chunks?file=README&type=changelog&limit=50` | 청크 조회 |
-| GET | `/api/check?threshold=0.9` | 모순 감지 |
-| GET | `/api/health` | 헬스체크 |
+| GET | `/api/search?q=security&top=5&type=changelog&role=developer` | Search |
+| GET | `/api/status` | Index status |
+| GET | `/api/chunks?file=README&type=changelog&limit=50` | Retrieve chunks |
+| GET | `/api/check?threshold=0.9` | Contradiction detection |
+| GET | `/api/health` | Health check |
 
-### 응답 예시
+### Response Example
 
 ```json
 {
-  "query": "보안",
+  "query": "security",
   "results": [
     {
       "id": 42,
       "file": "docs/rules.md",
-      "heading": "## 보안 정책",
-      "content": "모든 API 키는 환경변수로 관리...",
+      "heading": "## Security Policy",
+      "content": "All API keys are managed as environment variables...",
       "file_type": "rules",
       "tags": "security",
       "line_start": 15,
@@ -331,84 +331,84 @@ const { ConsigliereClient } = require('@cavss/consigliere');
 
 const consigliere = new ConsigliereClient({ endpoint: 'http://localhost:7890' });
 
-// 검색
-const { results } = await consigliere.search('보안', {
+// Search
+const { results } = await consigliere.search('security', {
   top: 5,
   role: 'developer'
 });
 
-// 상태
+// Status
 const status = await consigliere.status();
 // { files_indexed: 55, total_chunks: 682, embeddings: 682 }
 
-// 모순 감지
+// Contradiction detection
 const { contradictions, superseded } = await consigliere.check({
   threshold: 0.9
 });
 ```
 
-TypeScript 타입 정의 (`index.d.ts`) 포함.
+Includes TypeScript type definitions (`index.d.ts`).
 
 ---
 
-## 웹 UI
+## Web UI
 
 ```bash
 consigliere ui
 # → http://localhost:7890
 ```
 
-3개 탭:
-- **Search** — 쿼리 검색 (모드/역할/필터 선택)
-- **Browse** — 전체 청크 목록 조회
-- **Check** — 모순 감지 대시보드
+3 tabs:
+- **Search** — Query search (select mode/role/filter)
+- **Browse** — View full chunk list
+- **Check** — Contradiction detection dashboard
 
-상단 상태바에 파일 수, 청크 수, 임베딩 수, 모델명 실시간 표시.
+Status bar at the top shows file count, chunk count, embedding count, and model name in real time.
 
 ---
 
-## 버전 관리
+## Version Management
 
 ```bash
-# 현재 인덱스 상태를 스냅샷으로 저장
-consigliere snapshot --label "v1.0 릴리즈"
+# Save current index state as snapshot
+consigliere snapshot --label "v1.0 release"
 
-# 스냅샷 목록
+# List snapshots
 consigliere snapshot list
 # ID    COMMIT      LABEL                 FILES  CHUNKS  DATE
-# 2     a6d300abc9  v1.0 릴리즈               5      72  2026-03-31 14:30
-# 1     251d3c48e8  초기                      3      45  2026-03-31 10:00
+# 2     a6d300abc9  v1.0 release              5      72  2026-03-31 14:30
+# 1     251d3c48e8  initial                   3      45  2026-03-31 10:00
 
-# 두 시점 비교
+# Compare two points in time
 consigliere diff HEAD~1 HEAD
 # + Added (3 chunks):
-#   + docs/rules.md — ## 새 보안 정책
+#   + docs/rules.md — ## New Security Policy
 #   + docs/CHANGELOG.md — ### 2026-03-31
 # - Removed (1 chunk):
-#   - docs/rules.md — ## 구 보안 정책
+#   - docs/rules.md — ## Old Security Policy
 # Summary: +3 chunks, -1 chunks
 
-# 이전 시점으로 복원
+# Restore to a previous point
 consigliere restore HEAD~1
 ```
 
 ---
 
-## 모순 감지
+## Contradiction Detection
 
 ```bash
-# 기본 스캔 (threshold: 0.85)
+# Default scan (threshold: 0.85)
 consigliere check
 
-# 높은 정확도
+# High precision
 consigliere check --threshold 0.95
 
-# 해결 제안 포함
+# Include resolution suggestions
 consigliere check --fix
 # ⚠ Contradictions (2):
 # [1] similarity: 0.97
-#     A: docs/rules.md — ## PM 역할
-#     B: docs/CHANGELOG.md — ### Director 변경
+#     A: docs/rules.md — ## PM Role
+#     B: docs/CHANGELOG.md — ### Director Change
 #     → Review both and consolidate into the authoritative source.
 ```
 
@@ -417,35 +417,35 @@ consigliere check --fix
 ## Git Hook
 
 ```bash
-# 설치 — 커밋마다 자동으로 consigliere index 실행
+# Install — automatically runs consigliere index on every commit
 consigliere hook install
 # ✓ post-commit hook installed
 
-# 상태 확인
+# Check status
 consigliere hook status
 # ✓ hook installed at .git/hooks/post-commit
 
-# 제거
+# Remove
 consigliere hook uninstall
 ```
 
-기존 post-commit hook이 있으면 마커 기반으로 공존. 제거 시 Consigliere 블록만 삭제.
+If an existing post-commit hook is present, it coexists via marker-based injection. Removal deletes only the Consigliere block.
 
 ---
 
-## LLM 에이전트 연동 예시
+## LLM Agent Integration Examples
 
-### CLI에서 컨텍스트 주입
+### Context injection from CLI
 
 ```bash
-# 에이전트 스폰 전, 역할에 맞는 문서 검색
-CONTEXT=$(bin/consigliere search "현재 이슈" --role developer --top 3)
+# Before spawning an agent, search documents matching the role
+CONTEXT=$(bin/consigliere search "current issues" --role developer --top 3)
 
-# system prompt에 주입
-echo "참고 문서:\n$CONTEXT" | claude --system-prompt -
+# Inject into system prompt
+echo "Reference documents:\n$CONTEXT" | claude --system-prompt -
 ```
 
-### Node.js 서버에서
+### From a Node.js server
 
 ```javascript
 const { ConsigliereClient } = require('@cavss/consigliere');
@@ -458,97 +458,97 @@ async function getAgentContext(role, task) {
   ).join('\n---\n');
 }
 
-// 에이전트 스폰 시
-const context = await getAgentContext('ios_developer', '로그인 화면 구현');
+// When spawning an agent
+const context = await getAgentContext('ios_developer', 'implement login screen');
 spawnAgent({ systemPrompt: basePrompt + '\n\n' + context });
 ```
 
 ---
 
-## 프로젝트 구조
+## Project Structure
 
 ```
 consigliere/
-├── cmd/consigliere/main.go            CLI 엔트리포인트 (15개 서브커맨드)
+├── cmd/consigliere/main.go            CLI entry point (15 subcommands)
 ├── internal/
-│   ├── api/server.go             JSON REST API (5 엔드포인트)
-│   ├── check/check.go            모순 감지 엔진
-│   ├── config/config.go          TOML 설정 + 플러그인
-│   ├── docpipe/parser.go         MD 파싱 + 3가지 청킹 전략
-│   ├── embed/ollama.go           Ollama 임베딩 클라이언트
-│   ├── hook/hook.go              Git hook 관리
-│   ├── search/search.go          BM25 + 시맨틱 + 하이브리드 + 역할 부스트
-│   ├── snapshot/snapshot.go      버전 스냅샷 + diff + restore
+│   ├── api/server.go             JSON REST API (5 endpoints)
+│   ├── check/check.go            Contradiction detection engine
+│   ├── config/config.go          TOML config + plugins
+│   ├── docpipe/parser.go         MD parsing + 3 chunking strategies
+│   ├── embed/ollama.go           Ollama embedding client
+│   ├── hook/hook.go              Git hook management
+│   ├── search/search.go          BM25 + semantic + hybrid + role boost
+│   ├── snapshot/snapshot.go      Version snapshots + diff + restore
 │   ├── store/
-│   │   ├── db.go                 SQLite 스키마 (5 테이블)
-│   │   ├── chunks.go             청크 CRUD + 증분 업데이트
-│   │   └── vectors.go            벡터 BLOB + 코사인 유사도
+│   │   ├── db.go                 SQLite schema (5 tables)
+│   │   ├── chunks.go             Chunk CRUD + incremental update
+│   │   └── vectors.go            Vector BLOB + cosine similarity
 │   └── ui/
-│       ├── ui.go                 웹 UI 서버 (Go embed)
-│       └── index.html            SPA 대시보드
+│       ├── ui.go                 Web UI server (Go embed)
+│       └── index.html            SPA dashboard
 ├── sdk/node/                     Node.js SDK
-│   ├── index.js                  ConsigliereClient 클래스
-│   ├── index.d.ts                TypeScript 타입
+│   ├── index.js                  ConsigliereClient class
+│   ├── index.d.ts                TypeScript types
 │   └── package.json
 ├── docs/
-│   ├── ARCHITECTURE.md           아키텍처 상세
-│   ├── CHANGELOG.md              전체 변경 이력
-│   └── ROADMAP.md                로드맵 (Phase 1~9 완료)
-├── .consigliere.toml                  설정 파일
+│   ├── ARCHITECTURE.md           Architecture details
+│   ├── CHANGELOG.md              Full change history
+│   └── ROADMAP.md                Roadmap (Phase 1~9 complete)
+├── .consigliere.toml                  Config file
 ├── .gitignore
-├── Makefile                      빌드 자동화
+├── Makefile                      Build automation
 ├── go.mod
 └── go.sum
 ```
 
 ---
 
-## 성능
+## Performance
 
-| 항목 | 측정값 |
+| Item | Measured value |
 |------|--------|
-| 바이너리 크기 | ~13MB |
-| 인덱싱 (55파일, 682청크) | < 2초 |
-| BM25 검색 | ~10ms |
-| 시맨틱 검색 (700벡터) | ~5ms + Ollama RTT |
-| 임베딩 생성 (72청크) | ~30초 |
-| 피크 메모리 | ~12MB |
-| DB 크기 (72청크 + 벡터) | ~500KB |
+| Binary size | ~13MB |
+| Indexing (55 files, 682 chunks) | < 2 seconds |
+| BM25 search | ~10ms |
+| Semantic search (700 vectors) | ~5ms + Ollama RTT |
+| Embedding generation (72 chunks) | ~30 seconds |
+| Peak memory | ~12MB |
+| DB size (72 chunks + vectors) | ~500KB |
 
-## 기술 스택
+## Tech Stack
 
-| 구성 | 선택 | 이유 |
+| Component | Choice | Reason |
 |------|------|------|
-| 언어 | Go 1.18+ | 단일 바이너리, 크로스 컴파일 |
-| DB | SQLite + FTS5 | 서버 불필요, WAL 모드 |
-| 임베딩 | Ollama (nomic-embed-text) | 로컬, 무료, 768차원 |
-| 벡터 검색 | Go in-memory cosine | 의존성 0 |
-| 웹 UI | Go embed + 순수 HTML/JS | 프레임워크 0 |
-| SDK | Node.js fetch | 의존성 0 |
+| Language | Go 1.18+ | Single binary, cross-compilation |
+| DB | SQLite + FTS5 | No server required, WAL mode |
+| Embeddings | Ollama (nomic-embed-text) | Local, free, 768 dimensions |
+| Vector search | Go in-memory cosine | Zero dependencies |
+| Web UI | Go embed + pure HTML/JS | Zero frameworks |
+| SDK | Node.js fetch | Zero dependencies |
 
 ---
 
-## 로드맵
+## Roadmap
 
-| Phase | 기능 | 상태 |
+| Phase | Feature | Status |
 |-------|------|------|
-| 1 | DocumentPipe + BM25 + CLI | **완료** |
-| 2 | 벡터 임베딩 + 시맨틱 검색 | **완료** |
-| 3 | VCS hook 자동 인덱싱 | **완료** |
-| 4 | 버전 스냅샷 + diff | **완료** |
-| 5 | 모순 감지 | **완료** |
-| 6 | 역할별 검색 우선순위 | **완료** |
-| 7 | JSON API + Node.js SDK | **완료** |
-| 8 | 플러그인 시스템 | **완료** |
-| 9 | 웹 UI | **완료** |
+| 1 | DocumentPipe + BM25 + CLI | **Complete** |
+| 2 | Vector embeddings + semantic search | **Complete** |
+| 3 | VCS hook auto-indexing | **Complete** |
+| 4 | Version snapshots + diff | **Complete** |
+| 5 | Contradiction detection | **Complete** |
+| 6 | Role-based search priority | **Complete** |
+| 7 | JSON API + Node.js SDK | **Complete** |
+| 8 | Plugin system | **Complete** |
+| 9 | Web UI | **Complete** |
 
 ---
 
-## 관련 프로젝트
+## Related Projects
 
-- [**CLI Company**](https://github.com/Lee-JuYeon/CLI_Company) — 16개 AI 에이전트의 컨텍스트 메모리로 사용
-- **Beethovain** — 코딩 블렌딩 모델의 외장 메모리
-- **Soldato** — 블렌딩 모델이 Consigliere를 통해 코드베이스 이해
+- [**CLI Company**](https://github.com/Lee-JuYeon/CLI_Company) — Used as context memory for 16 AI agents
+- **Beethovain** — External memory for coding blending model
+- **Soldato** — Blending model understands codebase via Consigliere
 
 ---
 
