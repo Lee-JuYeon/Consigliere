@@ -6,8 +6,6 @@
 
 > **Document Memory System** — External memory for LLM agents
 
-[![Gemma 3](https://img.shields.io/badge/Gemma%203-4285F4?logo=googlegemini&logoColor=white)](https://ai.google.dev/gemma)
-
 [![Go](https://img.shields.io/badge/Go-1.18+-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![SQLite](https://img.shields.io/badge/SQLite-FTS5-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
